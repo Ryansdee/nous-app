@@ -19,6 +19,12 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Nous ✦",
   description: "Notre journal de couple",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Nous ✦",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
