@@ -86,12 +86,12 @@ export default function Navbar() {
       bottom: 0,
       left: 0,
       right: 0,
+      paddingBottom: 20,
       zIndex: 90,
       background: "rgba(18,18,20,0.92)",
       backdropFilter: "blur(20px)",
       WebkitBackdropFilter: "blur(20px)",
       borderTop: "0.5px solid rgba(255,255,255,0.08)",
-      paddingBottom: "env(safe-area-inset-bottom)",
     } as React.CSSProperties}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 0 4px" }}>
         {TABS.map((tab) => {
