@@ -308,7 +308,7 @@ export default function GiftsPage() {
       {tab === "my" && (
         <button
           onClick={() => setShowAdd(true)}
-          style={{ position: "fixed", bottom: 80, right: 20, width: 54, height: 54, borderRadius: "50%", background: "#FFF", border: "none", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.4)", zIndex: 50, color: "#000" }}
+          style={{ position: "fixed", bottom: 95, right: 20, width: 54, height: 54, borderRadius: "50%", background: "#FFF", border: "none", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.4)", zIndex: 50, color: "#000" }}
         >
           +
         </button>
