@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
+import Navbar from "@/components/Navbar";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ fontFamily: "var(--font-sans)", background: "#0d0d0d", color: "#f0ede8" }}>
         <AuthProvider>
           {children}
+          <Navbar />
         </AuthProvider>
       </body>
     </html>

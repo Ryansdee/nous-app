@@ -58,6 +58,8 @@ export default function HomePage() {
   const [formPhoto, setFormPhoto] = useState<File | null>(null);
   const [formPhotoPreview, setFormPhotoPreview] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [formLat, setFormLat] = useState<number | null>(null);
+  const [formLng, setFormLng] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,6 +103,8 @@ export default function HomePage() {
         location: formLocation,
         date: Timestamp.fromDate(new Date(formDate)),
         photoUrl: null,
+        lat: formLat,
+        lng: formLng,
         isSpecial: !!formWord,
         words: {
           ryan: user.name === "Ryan" ? formWord || null : null,
@@ -125,6 +129,8 @@ export default function HomePage() {
       setFormWord("");
       setFormPhoto(null);
       setFormPhotoPreview(null);
+      setFormLat(null);
+      setFormLng(null);
       setShowAddModal(false);
     } catch (err) {
       console.error(err);
@@ -151,7 +157,7 @@ export default function HomePage() {
   return (
     <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: s.bg, color: "#FFF", fontFamily: "var(--font-sans)", overflow: "hidden" }}>
 
-      {/* HEADER — flexShrink: 0, ne scroll jamais */}
+      {/* HEADER */}
       <div style={{ flexShrink: 0, padding: "60px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1C1C1E" }}>
         <div>
           <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 4 }}>
@@ -169,43 +175,15 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* SCROLL UNIQUE — tout dedans, un seul scroll */}
+      {/* SCROLL */}
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
-        <div style={{ padding: "20px", paddingBottom: 120, display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ padding: "20px", paddingBottom: 100, display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* Compteur */}
           <div style={{ background: "#1C1C1E", borderRadius: 16, padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <p style={{ fontSize: 12, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.3, marginBottom: 4 }}>Ensemble depuis</p>
-              <p style={{ fontSize: 44, fontWeight: 800, color: "#FFF", letterSpacing: -1, lineHeight: 1 }}>{daysTogether}</p>
-              <p style={{ fontSize: 14, color: "#8E8E93", marginTop: 4 }}>jours partagés</p>
-              <p style={{ fontSize: 12, color: "#636366", marginTop: 6 }}>Ce qui fait donc {Math.floor(daysTogether / 365)} an{Math.floor(daysTogether / 365) > 1 ? "s" : ""} ensemble !</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: 11, color: "#636366", textTransform: "uppercase", fontWeight: 500, marginBottom: 2 }}>Depuis le</p>
-              <p style={{ fontSize: 14, color: "#AEAEB2", fontWeight: 500 }}>22 déc. 2022</p>
-            </div>
-          </div>
-
-          {/* Pills horizontales */}
-          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
-            {daysUntilPartnerBirthday !== null && (
-              <div style={{ flexShrink: 0, background: "#1C1C1E", borderRadius: 10, padding: "8px 12px", border: "1px solid #2C2C2E" }}>
-                <p style={{ fontSize: 11, color: "#8E8E93", marginBottom: 2 }}>Anniversaire {partnerName}</p>
-                <p style={{ fontSize: 13, color: "#FFF", fontWeight: 600 }}>
-                  {daysUntilPartnerBirthday === 0 ? "Aujourd'hui 🎉" : `dans ${daysUntilPartnerBirthday}j`}
-                </p>
-              </div>
-            )}
-            <div style={{ flexShrink: 0, background: "#1C1C1E", borderRadius: 10, padding: "8px 12px", border: "1px solid #2C2C2E" }}>
-              <p style={{ fontSize: 11, color: "#8E8E93", marginBottom: 2 }}>Anniversaire de couple</p>
-              <p style={{ fontSize: 13, color: "#FFF", fontWeight: 600 }}>
-                {daysUntilAnniversary === 0 ? "Aujourd'hui 🎉" : `dans ${daysUntilAnniversary}j`}
-              </p>
-            </div>
-            <div style={{ flexShrink: 0, background: "#1C1C1E", borderRadius: 10, padding: "8px 12px", border: "1px solid #2C2C2E" }}>
-              <p style={{ fontSize: 11, color: "#8E8E93", marginBottom: 2 }}>Noël</p>
-              <p style={{ fontSize: 13, color: "#FFF", fontWeight: 600 }}>dans {getDaysUntil(new Date(new Date().getFullYear(), 11, 25))}j</p>
+              <p style={{ fontSize: 12, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.3, marginBottom: 4 }}>Coucou a nous deux</p>
+              <p style={{ fontSize: 44, fontWeight: 800, color: "#FFF", letterSpacing: -1, lineHeight: 1 }}>Je t'aime</p>
             </div>
           </div>
 
@@ -295,7 +273,7 @@ export default function HomePage() {
       {/* FAB */}
       <button
         onClick={() => setShowAddModal(true)}
-        style={{ position: "fixed", bottom: 30, right: 20, width: 54, height: 54, borderRadius: "50%", background: "#FFF", border: "none", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.4)", zIndex: 50, color: "#000" }}
+        style={{ position: "fixed", bottom: 80, right: 20, width: 54, height: 54, borderRadius: "50%", background: "#FFF", border: "none", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.4)", zIndex: 50, color: "#000" }}
       >
         +
       </button>
@@ -346,6 +324,18 @@ export default function HomePage() {
                 style={{ width: "100%", background: "#2C2C2E", border: "1px solid #3A3A3C", borderRadius: 10, padding: "12px", color: "#FFF", fontSize: 15, outline: "none" }}
               />
             </div>
+
+            {/* Géolocalisation */}
+            <button
+              type="button"
+              onClick={() => navigator.geolocation.getCurrentPosition(
+                (pos) => { setFormLat(pos.coords.latitude); setFormLng(pos.coords.longitude); },
+                () => {}
+              )}
+              style={{ width: "100%", padding: "12px", background: "#2C2C2E", border: "1px solid #3A3A3C", borderRadius: 10, color: formLat ? "#30D158" : "#0A84FF", fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 14 }}
+            >
+              {formLat ? "📍 Position enregistrée !" : "📍 Utiliser ma position actuelle"}
+            </button>
 
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: "block", fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, marginBottom: 6, letterSpacing: 0.3 }}>Mon mot (optionnel)</label>
