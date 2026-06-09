@@ -94,17 +94,44 @@ export default function HomePage() {
     setFormPhotoPreview(URL.createObjectURL(file));
   }
 
+  async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`,
+        { headers: { "Accept-Language": "fr" } }
+      );
+      const data = await res.json();
+      if (data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async function handleSubmit() {
     if (!user || !formTitle || !formLocation || !formDate) return;
     setFormLoading(true);
     try {
+      // Géocode automatique depuis le nom de la ville
+      let lat = formLat;
+      let lng = formLng;
+      if (!lat || !lng) {
+        const coords = await geocodeLocation(formLocation);
+        if (coords) {
+          lat = coords.lat;
+          lng = coords.lng;
+        }
+      }
+
       const docRef = await addDoc(collection(db, "memories"), {
         title: formTitle,
         location: formLocation,
         date: Timestamp.fromDate(new Date(formDate)),
         photoUrl: null,
-        lat: formLat,
-        lng: formLng,
+        lat,
+        lng,
         isSpecial: !!formWord,
         words: {
           ryan: user.name === "Ryan" ? formWord || null : null,
@@ -299,22 +326,32 @@ export default function HomePage() {
                 </>
               )}
             </div>
-
             {[
-              { label: "Titre", value: formTitle, set: setFormTitle, placeholder: "Ex: Weekend à Bruges" },
-              { label: "Lieu", value: formLocation, set: setFormLocation, placeholder: "Ex: Bruges, Belgique" },
-            ].map(({ label, value, set, placeholder }) => (
+              { label: "Titre", value: formTitle, set: setFormTitle, placeholder: "Ex: Weekend à Bruges", onBlur: undefined },
+              { label: "Lieu", value: formLocation, set: setFormLocation, placeholder: "Ex: Bruges, Belgique", onBlur: async () => {
+                if (formLocation && !formLat) {
+                  const coords = await geocodeLocation(formLocation);
+                  if (coords) {
+                    setFormLat(coords.lat);
+                    setFormLng(coords.lng);
+                  }
+                }
+              }},
+            ].map(({ label, value, set, placeholder, onBlur }) => (
               <div key={label} style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, marginBottom: 6, letterSpacing: 0.3 }}>{label}</label>
                 <input
                   value={value}
                   onChange={(e) => set(e.target.value)}
+                  onBlur={onBlur}
                   placeholder={placeholder}
                   style={{ width: "100%", background: "#2C2C2E", border: "1px solid #3A3A3C", borderRadius: 10, padding: "12px", color: "#FFF", fontSize: 15, outline: "none" }}
                 />
+                {label === "Lieu" && formLat && (
+                  <p style={{ fontSize: 11, color: "#30D158", marginTop: 4 }}>📍 Position trouvée automatiquement</p>
+                )}
               </div>
             ))}
-
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, marginBottom: 6, letterSpacing: 0.3 }}>Date</label>
               <input
@@ -332,9 +369,9 @@ export default function HomePage() {
                 (pos) => { setFormLat(pos.coords.latitude); setFormLng(pos.coords.longitude); },
                 () => {}
               )}
-              style={{ width: "100%", padding: "12px", background: "#2C2C2E", border: "1px solid #3A3A3C", borderRadius: 10, color: formLat ? "#30D158" : "#0A84FF", fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 14 }}
+              style={{ width: "100%", padding: "12px", background: "#2C2C2E", border: "1px solid #3A3A3C", borderRadius: 10, color: formLat ? "#30D158" : "#636366", fontSize: 14, fontWeight: 500, cursor: "pointer", marginBottom: 14 }}
             >
-              {formLat ? "📍 Position enregistrée !" : "📍 Utiliser ma position actuelle"}
+              {formLat ? "📍 Position GPS enregistrée" : "📍 Utiliser ma position GPS (optionnel)"}
             </button>
 
             <div style={{ marginBottom: 24 }}>
