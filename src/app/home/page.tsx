@@ -104,11 +104,37 @@ function FeedPost({ items, isLiked, onToggleLike }: {
             role="group"
             aria-roledescription="carrousel"
             aria-label={`${head.title} — ${photos.length} photos`}
-            style={{ display: "flex", overflowX: "auto", width: "100%", aspectRatio: "4 / 5", scrollSnapType: "x mandatory", scrollbarWidth: "none", background: "#1C1C1E" } as React.CSSProperties}
+            style={{
+              display: "flex",
+              overflowX: "auto",
+              width: "100%",
+              alignItems: "flex-start",
+              scrollSnapType: "x mandatory",
+              scrollbarWidth: "none",
+              background: "#1C1C1E",
+              touchAction: "pan-x",            // swipe horizontal pas volé par le scroll vertical (PWA iOS)
+              overscrollBehaviorX: "contain",  // pas de navigation arrière du PWA au swipe
+              WebkitOverflowScrolling: "touch",
+            } as React.CSSProperties}
           >
             {photos.map((src, i) => (
-              <div key={i} style={{ minWidth: "100%", height: "100%", scrollSnapAlign: "start", flexShrink: 0 }}>
-                <img src={src} alt={`Photo ${i + 1} sur ${photos.length} : ${head.title}`} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <div
+                key={i}
+                style={{
+                  minWidth: "100%",
+                  width: "100%",
+                  aspectRatio: "4 / 5",   // ← l'aspect ratio est sur le SLIDE, plus sur le conteneur
+                  flexShrink: 0,
+                  scrollSnapAlign: "start",
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={src}
+                  alt={`Photo ${i + 1} sur ${photos.length} : ${head.title}`}
+                  loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
               </div>
             ))}
           </div>
