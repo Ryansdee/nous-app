@@ -40,6 +40,7 @@ export interface Memory {
   location: string;
   date: Date;
   photoUrl: string | null;
+  photoUrls?: string[];
   lat: number | null;
   lng: number | null;
   isSpecial: boolean;
@@ -62,13 +63,11 @@ export async function getMemories(): Promise<Memory[]> {
       location: data.location,
       date: data.date.toDate(),
       photoUrl: data.photoUrl ?? null,
+      photoUrls: data.photoUrls ?? [],
       lat: data.lat ?? null,
       lng: data.lng ?? null,
       isSpecial: data.isSpecial ?? false,
-      words: {
-        ryan: data.words?.ryan ?? null,
-        sarah: data.words?.sarah ?? null,
-      },
+      words: data.words ?? { ryan: null, sarah: null },
       createdBy: data.createdBy,
       createdAt: data.createdAt.toDate(),
     };

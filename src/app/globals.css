@@ -9,3 +9,98 @@
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   globals-a11y.css — Nous ✦
+   Patch accessibilité global. À coller À LA FIN de globals.css
+   (après les @tailwind et tes styles existants).
+   ───────────────────────────────────────────────────────────── */
+
+/* 1. FOCUS VISIBLE
+   Apparaît uniquement à la navigation clavier (focus-visible),
+   donc invisible au tap — l'esthétique iOS reste intacte. */
+:focus-visible {
+  outline: 2px solid #c9a96e;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Supprime l'ancien outline par défaut uniquement quand focus-visible existe */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* 2. REDUCED MOTION
+   Fige le starfield, les transitions Framer-like et tout le reste
+   pour les personnes sensibles au mouvement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 3. SCROLLBARS
+   Masquées sur tactile (esthétique iOS conservée),
+   visibles mais discrètes sur desktop (pointer: fine). */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(240, 237, 232, 0.18);
+    border-radius: 4px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(240, 237, 232, 0.18) transparent;
+  }
+}
+
+/* 4. SAFE AREAS (PWA standalone)
+   Classes utilitaires à poser sur la topbar et la navbar. */
+.safe-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+.safe-bottom {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* 5. SR-ONLY
+   Texte présent pour les lecteurs d'écran, invisible à l'écran.
+   Ex : <label htmlFor="pwd" className="sr-only">Mot de passe</label> */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 6. ZOOM iOS — ceinture et bretelles
+   Même si un input échappe à inputStyle, jamais sous 16px. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* 7. TAP HIGHLIGHT
+   Remplace le flash gris iOS par un feedback subtil cohérent. */
+button,
+a,
+[role="button"] {
+  -webkit-tap-highlight-color: rgba(201, 169, 110, 0.15);
+}

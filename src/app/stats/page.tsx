@@ -5,7 +5,11 @@ import { useAuthStore } from "@/store/authStore";
 import { auth } from "@/lib/firebase";
 import { getMemories, getUser, Memory } from "@/lib/firestore";
 
-const TOGETHER_SINCE = new Date(2021, 11, 22);
+const TOGETHER_SINCE = new Date(2021, 11, 22); // ⚠️ une seule source : règle l'année ici
+
+// Dégradé « couple » réutilisé partout (rings de la home, barres, hero)
+const COUPLE_GRADIENT = "linear-gradient(135deg, #FF6482, #409CFF)";
+const COUPLE_GRADIENT_BAR = "linear-gradient(90deg, #FF2D55, #0A84FF)";
 
 function getDaysTogether(): number {
   const today = new Date();
@@ -23,7 +27,6 @@ function getDaysUntil(date: Date): number {
 }
 
 function getYearsTogether(): number {
-  const now = new Date();
   return Math.floor(getDaysTogether() / 365);
 }
 
@@ -31,6 +34,12 @@ function getMonthsTogether(): number {
   const now = new Date();
   return (now.getFullYear() - TOGETHER_SINCE.getFullYear()) * 12 + (now.getMonth() - TOGETHER_SINCE.getMonth());
 }
+
+// Styles partagés
+const eyebrow: React.CSSProperties = {
+  fontSize: 12, color: "#8E8E93", textTransform: "uppercase",
+  fontWeight: 600, letterSpacing: 0.5, marginBottom: 12,
+};
 
 export default function StatsPage() {
   const router = useRouter();
@@ -62,7 +71,7 @@ export default function StatsPage() {
   }, [user]);
 
   if (!user || loading) return (
-    <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0A0A0C" }}>
+    <div style={{ height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
       <p style={{ fontSize: 18, color: "#8E8E93" }}>Chargement...</p>
     </div>
   );
@@ -72,13 +81,11 @@ export default function StatsPage() {
   const yearsTogether = getYearsTogether();
   const partnerName = user.name === "Ryan" ? "Sarah" : "Ryan";
 
-  // Stats depuis les souvenirs
   const totalMemories = memories.length;
   const memoriesWithBothWords = memories.filter(m => m.words.ryan && m.words.sarah).length;
   const memoriesWithPhoto = memories.filter(m => m.photoUrl).length;
   const uniqueLocations = [...new Set(memories.map(m => m.location))].length;
 
-  // Milestones
   const MILESTONES = [
     { label: "100 jours", days: 100 },
     { label: "6 mois", days: 182 },
@@ -89,21 +96,17 @@ export default function StatsPage() {
     { label: "3 ans", days: 1095 },
     { label: "5 ans", days: 1825 },
   ];
-
   const nextMilestone = MILESTONES.find(m => m.days > daysTogether);
   const lastMilestone = [...MILESTONES].reverse().find(m => m.days <= daysTogether);
 
-  // Prochaines dates
   const upcomingDates = [
-    { label: `Anniversaire ${partnerName}`, date: partnerBirthday, emoji: "🎂", color: "#FF2D55" },
-    { label: "Anniversaire de couple", date: TOGETHER_SINCE, emoji: "✦", color: "#c9a96e" },
+    { label: `Anniversaire ${partnerName}`, date: partnerBirthday, emoji: "🎂", color: "#FF6482" },
+    { label: "Anniversaire de couple", date: TOGETHER_SINCE, emoji: "✦", color: "#FF2D55" },
     { label: "Noël", date: new Date(new Date().getFullYear(), 11, 25), emoji: "🎄", color: "#30D158" },
-    { label: `Anniversaire ${user.name}`, date: user.birthday, emoji: "🎂", color: "#0A84FF" },
+    { label: `Anniversaire ${user.name}`, date: user.birthday, emoji: "🎂", color: "#409CFF" },
   ].filter(d => d.date !== null) as { label: string; date: Date; emoji: string; color: string }[];
-
   upcomingDates.sort((a, b) => getDaysUntil(a.date) - getDaysUntil(b.date));
 
-  // Souvenirs par année
   const memoriesByYear = memories.reduce((acc, m) => {
     const y = m.date.getFullYear().toString();
     acc[y] = (acc[y] || 0) + 1;
@@ -111,133 +114,132 @@ export default function StatsPage() {
   }, {} as Record<string, number>);
   const maxYear = Math.max(...Object.values(memoriesByYear), 1);
 
-  return (
-    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#0A0A0C", color: "#FFF", fontFamily: "var(--font-sans)", overflow: "hidden" }}>
+  const sinceLabel = TOGETHER_SINCE.toLocaleDateString("fr-BE", { day: "numeric", month: "short", year: "numeric" });
 
-      {/* HEADER */}
-      <div style={{ flexShrink: 0, padding: "60px 20px 16px", borderBottom: "1px solid #1C1C1E" }}>
-        <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 4 }}>
+  return (
+    <div style={{ height: "100dvh", display: "flex", flexDirection: "column", background: "#000", color: "#FFF", fontFamily: "var(--font-sans)", overflow: "hidden" }}>
+
+      {/* HEADER — même style que la home (wordmark serif + safe area) */}
+      <header style={{ flexShrink: 0, padding: "max(14px, env(safe-area-inset-top)) 20px 14px", borderBottom: "1px solid #1C1C1E" }}>
+        <p style={{ fontSize: 12, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 4 }}>
           Ryan & Sarah
         </p>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#FFF", letterSpacing: -0.5 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFF", letterSpacing: -0.5, fontFamily: "var(--font-serif), serif" }}>
           Notre histoire
         </h1>
-      </div>
+      </header>
 
       {/* SCROLL */}
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
         <div style={{ padding: "20px", paddingBottom: 100, display: "flex", flexDirection: "column", gap: 16 }}>
 
-          {/* Hero — jours ensemble */}
+          {/* Hero — jours ensemble, nombre en dégradé couple */}
           <div style={{ background: "#1C1C1E", borderRadius: 20, padding: "28px 24px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: 200, height: 200, borderRadius: "50%", background: "rgba(201,169,110,0.05)", filter: "blur(40px)", pointerEvents: "none" }} />
-            <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
-              Ensemble depuis le 22 déc. 2022
+            <div aria-hidden="true" style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,100,130,0.12), rgba(64,156,255,0.06) 50%, transparent 70%)", filter: "blur(30px)", pointerEvents: "none" }} />
+            <p style={{ fontSize: 12, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8, position: "relative" }}>
+              Ensemble depuis le {sinceLabel}
             </p>
-            <p style={{ fontSize: 72, fontWeight: 800, color: "#FFF", letterSpacing: -2, lineHeight: 1, marginBottom: 4 }}>
+            <p style={{ fontSize: 72, fontWeight: 800, letterSpacing: -2, lineHeight: 1, marginBottom: 4, position: "relative", background: COUPLE_GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block" }}>
               {daysTogether}
             </p>
-            <p style={{ fontSize: 16, color: "#8E8E93", marginBottom: 20 }}>jours partagés</p>
-            <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 24, fontWeight: 700, color: "#FFF", letterSpacing: -0.5 }}>{yearsTogether}</p>
-                <p style={{ fontSize: 11, color: "#636366", marginTop: 2 }}>ans</p>
-              </div>
-              <div style={{ width: 1, background: "#2C2C2E" }} />
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 24, fontWeight: 700, color: "#FFF", letterSpacing: -0.5 }}>{monthsTogether}</p>
-                <p style={{ fontSize: 11, color: "#636366", marginTop: 2 }}>mois</p>
-              </div>
-              <div style={{ width: 1, background: "#2C2C2E" }} />
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 24, fontWeight: 700, color: "#FFF", letterSpacing: -0.5 }}>{daysTogether}</p>
-                <p style={{ fontSize: 11, color: "#636366", marginTop: 2 }}>jours</p>
-              </div>
+            <p style={{ fontSize: 16, color: "#8E8E93", marginBottom: 20, position: "relative" }}>jours partagés</p>
+            <div style={{ display: "flex", justifyContent: "center", gap: 24, position: "relative" }}>
+              {[
+                { v: yearsTogether, l: "ans" },
+                { v: monthsTogether, l: "mois" },
+                { v: daysTogether, l: "jours" },
+              ].map((x, i) => (
+                <div key={x.l} style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                  {i > 0 && <div style={{ width: 1, height: 32, background: "#2C2C2E" }} />}
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 24, fontWeight: 700, color: "#FFF", letterSpacing: -0.5 }}>{x.v}</p>
+                    <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 2 }}>{x.l}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Milestone */}
           {nextMilestone && (
-            <div style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px 20px" }}>
-              <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 12 }}>
-                Prochain milestone
-              </p>
+            <section style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px 20px" }}>
+              <h2 style={eyebrow}>Prochain milestone</h2>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <div>
                   {lastMilestone && (
-                    <p style={{ fontSize: 12, color: "#636366", marginBottom: 4 }}>✓ {lastMilestone.label}</p>
+                    <p style={{ fontSize: 12, color: "#8E8E93", marginBottom: 4 }}>✓ {lastMilestone.label}</p>
                   )}
                   <p style={{ fontSize: 18, fontWeight: 700, color: "#FFF" }}>{nextMilestone.label}</p>
-                  <p style={{ fontSize: 13, color: "#8E8E93", marginTop: 2 }}>
+                  <p style={{ fontSize: 13, color: "#AEAEB2", marginTop: 2 }}>
                     dans {nextMilestone.days - daysTogether} jours
                   </p>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ fontSize: 28, fontWeight: 800, color: "#c9a96e" }}>
-                    {Math.round((daysTogether / nextMilestone.days) * 100)}%
-                  </p>
-                </div>
+                <p style={{ fontSize: 28, fontWeight: 800, background: COUPLE_GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  {Math.round((daysTogether / nextMilestone.days) * 100)}%
+                </p>
               </div>
-              {/* Progress bar */}
-              <div style={{ height: 4, background: "#2C2C2E", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.min((daysTogether / nextMilestone.days) * 100, 100)}%`, background: "#c9a96e", borderRadius: 2, transition: "width 0.5s" }} />
+              <div
+                role="progressbar"
+                aria-valuenow={Math.round((daysTogether / nextMilestone.days) * 100)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Progression vers ${nextMilestone.label}`}
+                style={{ height: 6, background: "#2C2C2E", borderRadius: 3, overflow: "hidden" }}
+              >
+                <div style={{ height: "100%", width: `${Math.min((daysTogether / nextMilestone.days) * 100, 100)}%`, background: COUPLE_GRADIENT_BAR, borderRadius: 3, transition: "width 0.5s" }} />
               </div>
-            </div>
+            </section>
           )}
 
           {/* Stats grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[
-              { label: "Souvenirs", value: totalMemories, sub: "enregistrés", color: "#0A84FF" },
+              { label: "Souvenirs", value: totalMemories, sub: "enregistrés", color: "#409CFF" },
               { label: "Lieux visités", value: uniqueLocations, sub: "ensemble", color: "#30D158" },
               { label: "Mots écrits", value: memoriesWithBothWords, sub: "par vous deux", color: "#FF9F0A" },
-              { label: "Avec photo", value: memoriesWithPhoto, sub: "souvenirs", color: "#FF2D55" },
+              { label: "Avec photo", value: memoriesWithPhoto, sub: "souvenirs", color: "#FF6482" },
             ].map((stat) => (
               <div key={stat.label} style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px" }}>
-                <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.3, marginBottom: 8 }}>{stat.label}</p>
+                <p style={{ fontSize: 12, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.3, marginBottom: 8 }}>{stat.label}</p>
                 <p style={{ fontSize: 36, fontWeight: 800, color: stat.color, letterSpacing: -1, lineHeight: 1 }}>{stat.value}</p>
-                <p style={{ fontSize: 12, color: "#636366", marginTop: 4 }}>{stat.sub}</p>
+                <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 4 }}>{stat.sub}</p>
               </div>
             ))}
           </div>
 
           {/* Souvenirs par année */}
           {Object.keys(memoriesByYear).length > 0 && (
-            <div style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px 20px" }}>
-              <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 16 }}>
-                Souvenirs par année
-              </p>
+            <section style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px 20px" }}>
+              <h2 style={{ ...eyebrow, marginBottom: 16 }}>Souvenirs par année</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {Object.entries(memoriesByYear).sort(([a], [b]) => Number(b) - Number(a)).map(([year, count]) => (
                   <div key={year} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <p style={{ fontSize: 13, color: "#AEAEB2", fontWeight: 500, width: 36, flexShrink: 0 }}>{year}</p>
                     <div style={{ flex: 1, height: 6, background: "#2C2C2E", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${(count / maxYear) * 100}%`, background: "#0A84FF", borderRadius: 3 }} />
+                      <div style={{ height: "100%", width: `${(count / maxYear) * 100}%`, background: COUPLE_GRADIENT_BAR, borderRadius: 3 }} />
                     </div>
-                    <p style={{ fontSize: 13, color: "#636366", width: 16, flexShrink: 0, textAlign: "right" }}>{count}</p>
+                    <p style={{ fontSize: 13, color: "#8E8E93", width: 16, flexShrink: 0, textAlign: "right" }}>{count}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Prochaines dates */}
-          <div style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px 20px" }}>
-            <p style={{ fontSize: 11, color: "#8E8E93", textTransform: "uppercase", fontWeight: 600, letterSpacing: 0.5, marginBottom: 12 }}>
-              Prochaines dates
-            </p>
+          <section style={{ background: "#1C1C1E", borderRadius: 16, padding: "16px 20px" }}>
+            <h2 style={eyebrow}>Prochaines dates</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {upcomingDates.map((d, i) => {
                 const daysLeft = getDaysUntil(d.date);
                 return (
                   <div key={d.label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: i < upcomingDates.length - 1 ? "1px solid #2C2C2E" : "none" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#2C2C2E", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                      <div aria-hidden="true" style={{ width: 36, height: 36, borderRadius: 10, background: "#2C2C2E", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
                         {d.emoji}
                       </div>
                       <div>
                         <p style={{ fontSize: 14, color: "#FFF", fontWeight: 500 }}>{d.label}</p>
-                        <p style={{ fontSize: 12, color: "#636366", marginTop: 1 }}>
+                        <p style={{ fontSize: 12, color: "#8E8E93", marginTop: 1 }}>
                           {d.date.toLocaleDateString("fr-BE", { day: "numeric", month: "long" })}
                         </p>
                       </div>
@@ -248,7 +250,7 @@ export default function StatsPage() {
                       ) : (
                         <>
                           <p style={{ fontSize: 15, fontWeight: 700, color: d.color }}>J-{daysLeft}</p>
-                          <p style={{ fontSize: 11, color: "#636366" }}>{daysLeft === 1 ? "demain" : `${daysLeft} jours`}</p>
+                          <p style={{ fontSize: 12, color: "#8E8E93" }}>{daysLeft === 1 ? "demain" : `${daysLeft} jours`}</p>
                         </>
                       )}
                     </div>
@@ -256,7 +258,7 @@ export default function StatsPage() {
                 );
               })}
             </div>
-          </div>
+          </section>
 
         </div>
       </div>
