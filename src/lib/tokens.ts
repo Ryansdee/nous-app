@@ -1,96 +1,84 @@
 // src/lib/tokens.ts
 // ─────────────────────────────────────────────────────────────
-// Design tokens — Nous ✦
-// Source unique de vérité pour les inline styles.
-// Tous les contrastes texte/fond sont vérifiés WCAG AA (≥ 4.5:1)
-// sur le fond #0d0d0d.
+// Design tokens — Nous ✦ (palette iOS sombre)
+// Source unique pour les inline styles de toute l'app.
+// Contrastes texte vérifiés AA sur #000 / #1C1C1E.
 // ─────────────────────────────────────────────────────────────
-
-export const colors = {
-  // Fonds
-  bg: "#0d0d0d",
-  surface: "#161616",        // cards — légèrement éclairci pour mieux se détacher du bg
-  surfaceRaised: "#1d1d1d",  // modals, bottom sheets
-
-  // Texte
-  text: "#f0ede8",           // contraste ~16:1 sur bg ✓
-  textSecondary: "#b5afa5",  // contraste ~8:1 sur bg ✓ (pour le contenu secondaire)
-  muted: "#9c968c",          // contraste ~5.9:1 sur bg ✓ (labels, dates — minimum autorisé)
-  // ⚠️ Ne JAMAIS descendre sous #8a8a8a pour du texte sur #0d0d0d (AA = 4.5:1)
-
-  // Accent
-  accent: "#c9a96e",         // contraste ~8.6:1 sur bg ✓
-  accentSoft: "rgba(201, 169, 110, 0.12)",  // fonds de chips/tags uniquement, jamais pour du texte
-  onAccent: "#0d0d0d",       // texte sur bouton doré ✓
-
-  // Sarah / Ryan
-  rose: "#e8b4b4",           // contraste ~9:1 sur bg ✓
-  roseSoft: "rgba(232, 180, 180, 0.12)",
-
-  // Bordures — passées de 0.5px semi-transparent à des valeurs visibles
-  border: "rgba(240, 237, 232, 0.14)",
-  borderStrong: "rgba(240, 237, 232, 0.24)",  // éléments interactifs
-
-  // États sémantiques (jamais utilisés seuls : toujours accompagnés d'un texte/badge)
-  success: "#8fbf9a",
-  danger: "#d98a8a",
-} as const;
-
-export const font = {
-  serif: "var(--font-serif)",  // Cormorant Garamond
-  sans: "var(--font-sans)",    // DM Sans
-
-  // Échelle de tailles — 13px = plancher absolu (labels uniquement)
-  size: {
-    label: 13,      // dates, tags, eyebrows — REMPLACE les anciens 11px/12px
-    body: 15,
-    bodyLarge: 17,
-    title: 20,
-    display: 28,    // topbar-title
-    hero: 44,       // logo login
-  },
-
-  // 16px minimum sur TOUT input/textarea/select → empêche le zoom auto iOS
-  inputSize: 16,
-} as const;
-
-export const space = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  xxl: 32,
-} as const;
-
-export const radius = {
-  sm: 10,
-  md: 14,
-  lg: 20,
-  pill: 999,
-} as const;
-
-// Taille tactile minimale (Apple HIG : 44pt)
-export const TOUCH_TARGET = 44;
-
-// ─────────────────────────────────────────────────────────────
-// Styles réutilisables pour les patterns récurrents
-// ─────────────────────────────────────────────────────────────
-
 import type { CSSProperties } from "react";
 
-/** Card standard (surface + bordure visible) */
-export const cardStyle: CSSProperties = {
-  background: colors.surface,
-  border: `1px solid ${colors.border}`,
-  borderRadius: radius.md,
+export const c = {
+  bg: "#000000",
+  card: "#161618",
+  card2: "#262629",
+  card3: "#36363A",
+  separator: "#262626",
+  text: "#F5F5F5",
+  text2: "#C7C7CC",
+  text3: "#A8A8A8",
+  blue: "#0095F6",
+  link: "#4CB5F9",
+  green: "#30D158",
+  red: "#FF453A",
+  pink: "#FF2D55",
+  rose: "#FF6482",
+  orange: "#FF9F0A",
+  yellow: "#FFD60A",
+  gold: "#D6B26E",
+  purple: "#BF5AF2",
+  teal: "#40C8E0",
+} as const;
+
+/** Dégradé de marque (anneaux de stories, bouton +, accents) */
+export const BRAND = "linear-gradient(45deg, #FF3769 0%, #FF6B9A 35%, #9B6BFF 70%, #1E8CFF 100%)";
+
+export const font = {
+  serif: "var(--font-serif), Georgia, serif",
+  sans: "var(--font-sans), system-ui, -apple-system, sans-serif",
+} as const;
+
+export const radius = { sm: 10, md: 14, lg: 18, xl: 22, pill: 999 } as const;
+
+/** Taille tactile minimale (Apple HIG) */
+export const TOUCH = 44;
+
+// ── Patterns réutilisables ───────────────────────────────────
+
+export const card: CSSProperties = {
+  background: c.card,
+  borderRadius: radius.lg,
 };
 
-/**
- * Reset pour transformer un <button> en élément stylable librement.
- * À utiliser pour convertir les anciens <div onClick> :
- * <button style={{ ...buttonReset, ...tesStyles }}>
- */
+export const eyebrow: CSSProperties = {
+  fontSize: 12,
+  color: c.text3,
+  textTransform: "uppercase",
+  fontWeight: 600,
+  letterSpacing: 0.5,
+};
+
+export const label: CSSProperties = {
+  display: "block",
+  fontSize: 13,
+  color: c.text3,
+  fontWeight: 600,
+  marginBottom: 6,
+  paddingLeft: 4,
+};
+
+/** 16 px minimum → pas de zoom auto iOS au focus */
+export const input: CSSProperties = {
+  width: "100%",
+  background: c.card,
+  border: "1px solid #2A2A2E",
+  borderRadius: 12,
+  padding: "13px 14px",
+  color: c.text,
+  fontSize: 16,
+  fontFamily: font.sans,
+  outline: "none",
+  minHeight: 48,
+};
+
 export const buttonReset: CSSProperties = {
   appearance: "none",
   background: "none",
@@ -103,42 +91,31 @@ export const buttonReset: CSSProperties = {
   cursor: "pointer",
 };
 
-/**
- * Zone tactile élargie pour les petites icônes (like, fermer, etc.)
- * L'icône reste petite visuellement, la zone cliquable fait 44×44.
- */
-export const touchTarget: CSSProperties = {
-  minWidth: TOUCH_TARGET,
-  minHeight: TOUCH_TARGET,
+export const primaryButton: CSSProperties = {
+  ...buttonReset,
+  width: "100%",
+  minHeight: 50,
+  borderRadius: 12,
+  background: c.blue,
+  color: "#FFF",
+  fontSize: 16,
+  fontWeight: 600,
+  textAlign: "center",
+};
+
+export const secondaryButton: CSSProperties = {
+  ...primaryButton,
+  background: c.card2,
+  color: c.text,
+};
+
+export const iconButton: CSSProperties = {
+  ...buttonReset,
+  width: TOUCH,
+  height: TOUCH,
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-};
-
-/**
- * Scrim à poser entre une image/fond saisonnier et du texte.
- * <div style={{ position: "relative" }}>
- *   <img ... />
- *   <div style={scrimStyle} />
- *   <p style={{ position: "relative", zIndex: 1 }}>texte lisible</p>
- * </div>
- */
-export const scrimStyle: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  background:
-    "linear-gradient(180deg, rgba(13,13,13,0.25) 0%, rgba(13,13,13,0.75) 100%)",
-  pointerEvents: "none",
-};
-
-/** Input conforme : 16px (pas de zoom iOS), label requis à côté */
-export const inputStyle: CSSProperties = {
-  fontSize: font.inputSize,
-  fontFamily: font.sans,
-  color: colors.text,
-  background: colors.surfaceRaised,
-  border: `1px solid ${colors.borderStrong}`,
-  borderRadius: radius.sm,
-  padding: "12px 14px",
-  width: "100%",
+  borderRadius: radius.pill,
+  flexShrink: 0,
 };

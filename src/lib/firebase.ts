@@ -1,6 +1,12 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -14,7 +20,22 @@ const firebaseConfig = {
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
+// Cache Firestore persistant (IndexedDB) côté navigateur :
+// l'app s'ouvre instantanément avec les dernières données, même hors ligne
+// (métro, avion…), et les écritures sont synchronisées au retour du réseau.
+function createDb(): Firestore {
+  if (typeof window === "undefined") return getFirestore(app);
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch {
+    // Déjà initialisé (HMR) ou IndexedDB indisponible (navigation privée)
+    return getFirestore(app);
+  }
+}
+
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = createDb();
 export const storage = getStorage(app);
 export default app;

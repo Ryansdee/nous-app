@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-interface UserData {
+export interface UserData {
   uid: string;
   name: string;
   email: string;
@@ -9,12 +9,17 @@ interface UserData {
   weddingDate: Date | null;
 }
 
+/** loading = Firebase n'a pas encore répondu ; authed / anon ensuite. */
+export type AuthStatus = "loading" | "authed" | "anon";
+
 interface AuthStore {
   user: UserData | null;
+  status: AuthStatus;
   setUser: (user: UserData | null) => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
-  setUser: (user) => set({ user }),
+  status: "loading",
+  setUser: (user) => set({ user, status: user ? "authed" : "anon" }),
 }));

@@ -1,0 +1,66 @@
+rules_version = '2';
+
+// Règles Firestore — Nous ✦
+// L'app n'a que deux comptes (Ryan & Sarah) : tout utilisateur connecté
+// qui possède un document /users/{uid} est membre du couple.
+// À publier avec : firebase deploy --only firestore:rules
+// (ou copier-coller dans la console Firebase → Firestore → Règles)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function member() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Souvenirs + j'aime / enregistrés / compteur de commentaires
+    match /memories/{memoryId} {
+      allow read, create, update: if member();
+      allow delete: if member() && resource.data.createdBy == request.auth.uid;
+
+      match /comments/{commentId} {
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.authorUid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 1000;
+        allow delete: if member() && resource.data.authorUid == request.auth.uid;
+      }
+    }
+
+    // Activité (notifications) : lisible / marquable « lue » par le destinataire
+    match /activity/{activityId} {
+      allow create: if member() && request.resource.data.actorUid == request.auth.uid;
+      allow read, update, delete: if member() && resource.data.toUid == request.auth.uid;
+    }
+
+    // Wishlists : chacun gère la sienne, l'autre peut réserver
+    match /gifts/{ownerId}/items/{itemId} {
+      allow read: if member();
+      allow create, delete: if member() && request.auth.uid == ownerId;
+      allow update: if member();
+    }
+
+    match /bucketlist/{itemId} {
+      allow read, write: if member();
+    }
+
+    // Capsule : chacun n'écrit que sa lettre
+    match /capsule/{uid} {
+      allow read: if member();
+      allow write: if member() && request.auth.uid == uid;
+    }
+
+    match /restoBets/{betId} {
+      allow read, write: if member();
+    }
+  }
+}

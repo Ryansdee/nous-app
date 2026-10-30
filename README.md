@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nous ✦
 
-## Getting Started
+Journal de couple de Ryan & Sarah. C'est une PWA mobile-first (Next.js App Router, Firebase, Zustand).
 
-First, run the development server:
+## Lancer
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # génère public/sw.js puis lance next dev (le SW n'est actif qu'en prod)
+npm run build    # génère public/sw.js (version unique) puis next build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables d'environnement : `NEXT_PUBLIC_FIREBASE_*` (voir `src/lib/firebase.ts`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture mobile
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/app/
+  layout.tsx            viewport (viewport-fit=cover), meta iOS, splash screens, PwaManager
+  manifest.ts           manifest PWA (icônes any + maskable, raccourcis)
+  login/                hors coquille (pas de tab bar)
+  (app)/layout.tsx      coquille connectée : garde d'auth, abonnements temps réel, TabBar, « Nouvelle publication »
+  (app)/home            fil : stories + publications (j'aime, commentaires, partage, enregistrer)
+  (app)/map             carte des lieux
+  (app)/activity        notifications de l'autre (badge dans la tab bar)
+  (app)/profile         profil du couple : stats, « à la une », grille / enregistrés / mots
+  (app)/p/[id]          détail d'une publication (?c=1 ouvre les commentaires)
+  (app)/settings|stats|memory|gifts|bucketlist|capsule|resto   sous-pages (bouton retour)
+src/components/
+  ui/Screen.tsx         écran = en-tête + zone scrollable + tirer pour rafraîchir
+  ui/PageHeader.tsx     titre large, safe-area, retour, actions
+  ui/Sheet.tsx          bottom sheet (glisser pour fermer, suit le clavier)
+  ui/ActionSheet.tsx    confirmations iOS (remplace window.confirm)
+  ui/kit.tsx            Segmented, Chips, EmptyState, squelettes, EmojiPicker…
+  ui/Avatar.tsx         avatars (Ryan bleu, Sarah rose) + avatar du couple
+  feed/                 PostCard, CommentsSheet, Stories (rangée + visionneuse), WordSheet
+  shell/                TabBar, AddMemorySheet, PwaManager, Splash
+src/store/              authStore (status loading/authed/anon), dataStore (cache partagé), uiStore
+src/lib/                social.ts (j'aime, enregistrés, commentaires, activité), time.ts (dates relatives), couple.ts (dates du couple), device.ts (haptique, compression photo, GPS), pwa.ts, tokens.ts
+scripts/                build-sw.mjs + sw-template.js → public/sw.js
+```
 
-## Learn More
+**Principes**
 
-To learn more about Next.js, take a look at the following resources:
+- Le document ne scrolle jamais : chaque écran a son conteneur de scroll. Il n'y a donc ni rebond global ni tab bar qui bouge.
+- Les safe-areas passent par des variables CSS (`--safe-top`, `--safe-bottom`, `--tabbar-space`).
+- Les inputs font 16 px minimum (pas de zoom iOS), les cibles tactiles 44 px minimum.
+- Le cache Firestore est persistant (IndexedDB) : l'app s'ouvre avec les données même hors ligne.
+- Le service worker sert les pages avec la stratégie réseau d'abord (4 s) → cache → `/offline.html`. Les photos et les tuiles de carte sont mises en cache.
+- Chaque déploiement change `sw.js`, ce qui affiche la bannière « Nouvelle version disponible ».
+- Les photos sont compressées avant envoi (JPEG, 2048 px max).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Les icônes et les splash screens iOS sont dans `public/icons`, `public/splash`, `src/app/icon.png` et `src/app/apple-icon.png`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Social (Firestore)
 
-## Deploy on Vercel
+```
+memories/{id}                  likes: uid[], savedBy: uid[], commentCount
+memories/{id}/comments/{cid}   text, authorUid, authorName, createdAt
+activity/{aid}                 type, toUid, actorUid, actorName, memoryId, thumb, text, read, createdAt
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Les règles de sécurité correspondantes sont dans `firestore.rules`. Il faut les publier pour que les commentaires et l'activité fonctionnent.

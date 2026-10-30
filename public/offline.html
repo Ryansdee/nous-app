@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Nous ✦ — hors ligne</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;color:#fff;font-family:-apple-system,system-ui,sans-serif}
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+  h1{font-size:22px;margin:8px 0 0}
+  p{color:#8e8e93;font-size:15px;line-height:1.45;max-width:280px;margin:0}
+  button{margin-top:10px;min-height:48px;padding:0 24px;border-radius:14px;border:0;background:#0a84ff;color:#fff;font-size:17px;font-weight:600}
+</style>
+</head>
+<body>
+  <svg width="64" height="64" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3769"/><stop offset="1" stop-color="#1E8CFF"/></linearGradient></defs><path d="M50 4 C54 34 66 46 96 50 C66 54 54 66 50 96 C46 66 34 54 4 50 C34 46 46 34 50 4 Z" fill="url(#g)"/></svg>
+  <h1>Pas de connexion</h1>
+  <p>Cette page n'est pas encore disponible hors ligne. Réessaie dès que tu as du réseau.</p>
+  <button onclick="location.reload()">Réessayer</button>
+  <script>addEventListener("online",()=>location.reload())</script>
+</body>
+</html>

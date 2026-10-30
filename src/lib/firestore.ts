@@ -10,8 +10,22 @@ import {
   updateDoc,
   Timestamp,
   deleteDoc,
+  onSnapshot,
+  type DocumentData,
+  type DocumentSnapshot,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "./firebase";
+import { compressImage } from "./device";
+
+/** Compresse puis envoie une photo dans Storage, renvoie son URL publique. */
+export async function uploadPhoto(path: string, file: File): Promise<string> {
+  const small = await compressImage(file);
+  const ext = small.type === "image/jpeg" ? "jpg" : (small.name.split(".").pop() || "img");
+  const storageRef = ref(storage, `${path}.${ext}`);
+  await uploadBytes(storageRef, small, { contentType: small.type, cacheControl: "public, max-age=31536000, immutable" });
+  return getDownloadURL(storageRef);
+}
 
 export async function getUser(uid: string) {
   const snap = await getDoc(doc(db, "users", uid));
@@ -50,55 +64,101 @@ export interface Memory {
   };
   createdBy: string;
   createdAt: Date;
+  /** uid de ceux qui ont aimé */
+  likes: string[];
+  /** uid de ceux qui ont enregistré le souvenir */
+  savedBy: string[];
+  commentCount: number;
+}
+
+export function mapMemory(d: DocumentSnapshot<DocumentData>): Memory {
+  const data = d.data() ?? {};
+  return {
+    id: d.id,
+    title: data.title ?? "",
+    location: data.location ?? "",
+    date: data.date?.toDate?.() ?? new Date(),
+    photoUrl: data.photoUrl ?? null,
+    photoUrls: data.photoUrls ?? [],
+    lat: data.lat ?? null,
+    lng: data.lng ?? null,
+    isSpecial: data.isSpecial ?? false,
+    words: data.words ?? { ryan: null, sarah: null },
+    createdBy: data.createdBy,
+    createdAt: data.createdAt?.toDate?.() ?? new Date(),
+    likes: data.likes ?? [],
+    savedBy: data.savedBy ?? [],
+    commentCount: data.commentCount ?? 0,
+  };
 }
 
 export async function getMemories(): Promise<Memory[]> {
   const q = query(collection(db, "memories"), orderBy("date", "desc"));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      title: data.title,
-      location: data.location,
-      date: data.date.toDate(),
-      photoUrl: data.photoUrl ?? null,
-      photoUrls: data.photoUrls ?? [],
-      lat: data.lat ?? null,
-      lng: data.lng ?? null,
-      isSpecial: data.isSpecial ?? false,
-      words: data.words ?? { ryan: null, sarah: null },
-      createdBy: data.createdBy,
-      createdAt: data.createdAt.toDate(),
-    };
-  });
+  return snap.docs.map(mapMemory);
 }
 
-export async function addMemory(data: {
-  title: string;
-  location: string;
-  date: Date;
-  photoUrl: string | null;
-  isSpecial: boolean;
-  word: string | null;
-  authorName: string;
-  createdBy: string;
-}) {
-  const words = {
-    ryan: data.authorName === "Ryan" ? data.word : null,
-    sarah: data.authorName === "Sarah" ? data.word : null,
-  };
+/** Souvenirs en temps réel (likes, commentaires, nouveaux posts de l'autre). */
+export function subscribeMemories(cb: (m: Memory[]) => void, onError?: (e: Error) => void): () => void {
+  const q = query(collection(db, "memories"), orderBy("date", "desc"));
+  return onSnapshot(q, (snap) => cb(snap.docs.map(mapMemory)), onError);
+}
 
-  await addDoc(collection(db, "memories"), {
+/** Toutes les photos d'un souvenir (ancien champ photoUrl comme nouveau photoUrls). */
+export function photosOf(m: Memory): string[] {
+  if (m.photoUrls && m.photoUrls.length) return m.photoUrls;
+  return m.photoUrl ? [m.photoUrl] : [];
+}
+
+/**
+ * Crée un souvenir complet : document + upload des photos (compressées)
+ * dans l'ordre de sélection. `onProgress` est appelé après chaque photo.
+ */
+export async function createMemory(
+  data: {
+    title: string;
+    location: string;
+    date: Date;
+    lat: number | null;
+    lng: number | null;
+    word: string | null;
+    authorName: string;
+    createdBy: string;
+  },
+  photos: File[],
+  onProgress?: (done: number, total: number) => void
+): Promise<{ id: string; cover: string | null }> {
+  const docRef = await addDoc(collection(db, "memories"), {
     title: data.title,
     location: data.location,
     date: Timestamp.fromDate(data.date),
-    photoUrl: data.photoUrl,
-    isSpecial: data.isSpecial,
-    words,
+    photoUrl: null,
+    photoUrls: [],
+    lat: data.lat,
+    lng: data.lng,
+    isSpecial: !!data.word,
+    words: {
+      ryan: data.authorName === "Ryan" ? data.word || null : null,
+      sarah: data.authorName === "Sarah" ? data.word || null : null,
+    },
     createdBy: data.createdBy,
     createdAt: Timestamp.now(),
+    likes: [],
+    savedBy: [],
+    commentCount: 0,
   });
+
+  if (photos.length > 0) {
+    const urls: string[] = [];
+    onProgress?.(0, photos.length);
+    for (let i = 0; i < photos.length; i++) {
+      urls.push(await uploadPhoto(`memories/${docRef.id}/${i}-${Date.now()}`, photos[i]));
+      onProgress?.(i + 1, photos.length);
+    }
+    await updateDoc(doc(db, "memories", docRef.id), { photoUrl: urls[0] ?? null, photoUrls: urls });
+    return { id: docRef.id, cover: urls[0] ?? null };
+  }
+  return { id: docRef.id, cover: null };
 }
 
 export async function addWordToMemory(
@@ -210,7 +270,7 @@ export async function addBucketItem(data: {
 }
 
 export async function toggleBucketItem(itemId: string, done: boolean) {
-  await updateDoc(doc(db, "bucketlist"), {
+  await updateDoc(doc(db, "bucketlist", itemId), {
     done,
     doneAt: done ? Timestamp.now() : null,
   });

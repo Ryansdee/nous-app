@@ -1,8 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
+import { haptic } from "@/lib/device";
 
 const USERS = [
   { name: "Ryan", email: "ryan@nous.app", initial: "R", color: "#0A84FF", bg: "rgba(10,132,255,0.08)" },
@@ -16,6 +18,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const status = useAuthStore((s) => s.status);
+
+  // Déjà connecté (app rouverte) → directement à l'accueil
+  useEffect(() => {
+    if (status === "authed") router.replace("/home");
+  }, [status, router]);
 
   async function handleLogin() {
     if (selected === null || !password || loading) return;
@@ -23,8 +31,10 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithEmailAndPassword(auth, USERS[selected].email, password);
-      router.push("/home");
+      haptic([10, 30, 10]);
+      // La redirection se fait quand le profil est chargé (effet ci-dessus)
     } catch {
+      haptic([30, 60, 30]);
       setError("Mot de passe incorrect.");
     } finally {
       setLoading(false);
@@ -32,6 +42,7 @@ export default function LoginPage() {
   }
 
   function selectUser(i: number) {
+    haptic(8);
     setSelected(i);
     setPassword("");
     setError("");
@@ -44,13 +55,14 @@ export default function LoginPage() {
   return (
     <main
       style={{
-        height: "100dvh",
+        height: "100%",
+        overflowY: "auto",
         display: "flex",
         flexDirection: "column",
         backgroundColor: "#0B0B0C",
         color: "#FFFFFF",
         fontFamily: "var(--font-sans), system-ui, -apple-system, sans-serif",
-        padding: "env(safe-area-inset-top) 24px env(safe-area-inset-bottom)",
+        padding: "var(--safe-top) 24px var(--safe-bottom)",
       }}
     >
       {/* ZONE TOP — Logo & Titres épurés (Prend 45% de la hauteur) */}
@@ -62,11 +74,21 @@ export default function LoginPage() {
         justifyContent: "center",
         textAlign: "center",
       }}>
+        <svg width="56" height="56" viewBox="0 0 100 100" aria-hidden="true" style={{ marginBottom: 18 }}>
+          <defs>
+            <linearGradient id="login-g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#FF3769" />
+              <stop offset="1" stopColor="#1E8CFF" />
+            </linearGradient>
+          </defs>
+          <path d="M50 4 C54 34 66 46 96 50 C66 54 54 66 50 96 C46 66 34 54 4 50 C34 46 46 34 50 4 Z" fill="url(#login-g)" />
+        </svg>
         <h1 style={{
-          fontSize: 48,
-          fontWeight: 800,
+          fontFamily: "var(--font-serif), Georgia, serif",
+          fontSize: 54,
+          fontWeight: 600,
           color: "#FFFFFF",
-          letterSpacing: "-1.5px",
+          letterSpacing: "-1px",
           marginBottom: 8,
           lineHeight: 1,
         }}>
@@ -122,6 +144,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => selectUser(i)}
               aria-pressed={selected === i}
+              className="tap"
               style={{
                 flex: 1,
                 display: "flex",
@@ -130,8 +153,8 @@ export default function LoginPage() {
                 gap: 12,
                 padding: "24px 0",
                 borderRadius: 14,
-                border: selected === i ? `2px solid ${u.color}` : "1px solid #2C2C2E",
-                background: selected === i ? u.bg : "#1C1C1E",
+                border: selected === i ? `2px solid ${u.color}` : "1px solid #262629",
+                background: selected === i ? u.bg : "#161618",
                 cursor: "pointer",
                 transition: "all 0.2s ease-in-out",
                 // outline: "none" SUPPRIMÉ → le :focus-visible global reprend la main
@@ -196,8 +219,8 @@ export default function LoginPage() {
             display: "flex",
             alignItems: "center",
             gap: 12,
-            background: "#1C1C1E",
-            border: "1px solid #2C2C2E",
+            background: "#161618",
+            border: "1px solid #262629",
             borderRadius: 12,
             padding: "14px 16px",
           }}>
@@ -213,6 +236,7 @@ export default function LoginPage() {
               ref={passwordRef}
               type="password"
               autoComplete="current-password"
+              enterKeyHint="go"
               placeholder="Saisir le mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -240,12 +264,12 @@ export default function LoginPage() {
             disabled={loading || !password}
             style={{
               width: "100%",
-              padding: "14px 0",
-              borderRadius: 12,
+              minHeight: 52,
+              borderRadius: 14,
               border: "none",
               background: "#FFFFFF",
               color: "#000000",
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: 600,
               cursor: loading || !password ? "default" : "pointer",
               opacity: loading || !password ? 0.4 : 1,
